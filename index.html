@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>My Agenda</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Nunito:wght@300;400;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #fdf8f0;
+    --warm: #f5ede0;
+    --gold: #d4a84b;
+    --gold-light: #f0d9a8;
+    --gold-pale: #fdf3e0;
+    --ink: #2c2416;
+    --muted: #8a7860;
+    --border: #e0d4c0;
+    --card: #ffffff;
+    --shadow: 0 2px 12px rgba(44,36,22,0.08);
+    --shadow-lg: 0 8px 32px rgba(44,36,22,0.14);
+    --green: #4caf50;
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 0 0 100px;
+    background-image: radial-gradient(circle at 80% 10%, #f0e6d0 0%, transparent 50%),
+                      radial-gradient(circle at 10% 90%, #e8dcc8 0%, transparent 40%);
+  }
+
+  /* ── HEADER ── */
+  .header {
+    padding: 28px 20px 16px;
+    border-bottom: 1.5px solid var(--border);
+    background: var(--cream);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 2px;
+  }
+
+  .page-title {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 2rem;
+    color: var(--ink);
+    letter-spacing: -0.5px;
+  }
+
+  .date-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── SECTIONS ── */
+  .section {
+    padding: 20px 16px 0;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .section-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .section-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--gold);
+    flex-shrink: 0;
+  }
+
+  .section-dot.tomorrow { background: #b0b0b0; }
+
+  .event-count {
+    margin-left: auto;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--muted);
+    background: var(--warm);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2px 8px;
+  }
+
+  /* ── EVENT CARDS ── */
+  .events-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .event-card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+    position: relative;
+  }
+  .event-card:active { transform: scale(0.98); }
+
+  .event-card.completed {
+    opacity: 0.55;
+    background: #f5f5f5;
+  }
+  .event-card.completed .event-name {
+    text-decoration: line-through;
+    color: #999;
+  }
+
+  .cat-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .cat-dot.work     { background: #2563a8; }
+  .cat-dot.personal { background: #1e7a3d; }
+  .cat-dot.health   { background: #b93a3a; }
+  .cat-dot.social   { background: #7c3aad; }
+  .cat-dot.other    { background: #a0620a; }
+
+  .event-info { flex: 1; min-width: 0; }
+
+  .event-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .event-time {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-weight: 600;
+    margin-top: 2px;
+  }
+
+  .event-badge {
+    font-size: 0.52rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: var(--gold);
+    color: white;
+    border-radius: 4px;
+    padding: 2px 6px;
+  }
+
+  .check-icon {
+    font-size: 1rem;
+    color: var(--green);
+    flex-shrink: 0;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 24px 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .empty-state .emoji { font-size: 1.6rem; display: block; margin-bottom: 6px; }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1.5px;
+    background: var(--border);
+    margin: 20px 16px 0;
+  }
+
+  /* ── QUICK ADD ── */
+  .add-section {
+    padding: 20px 16px 0;
+  }
+
+  .add-card {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+
+  .form-group { margin-bottom: 12px; }
+
+  .form-label {
+    display: block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  .form-input, .form-select {
+    width: 100%;
+    background: var(--warm);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    color: var(--ink);
+    padding: 10px 13px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  .form-input:focus, .form-select:focus {
+    border-color: var(--gold);
+    background: var(--gold-pale);
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .add-btn {
+    width: 100%;
+    background: var(--gold);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 0.92rem;
+    padding: 13px;
+    cursor: pointer;
+    margin-top: 4px;
+    letter-spacing: 0.03em;
+    transition: opacity 0.15s, transform 0.12s;
+  }
+  .add-btn:active { opacity: 0.85; transform: scale(0.98); }
+
+  /* ── CONTEXT MENU ── */
+  .ctx-menu {
+    position: fixed;
+    z-index: 999;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    padding: 6px;
+    min-width: 180px;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .ctx-menu.open { display: flex; }
+
+  .ctx-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 10px 7px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+
+  .ctx-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: none;
+    border: none;
+    border-radius: 9px;
+    padding: 10px 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.1s;
+    width: 100%;
+  }
+  .ctx-btn:hover, .ctx-btn:active { background: var(--warm); }
+  .ctx-btn.ctx-complete  { color: #1e7a3d; }
+  .ctx-btn.ctx-complete:hover  { background: #dcf5e4; }
+  .ctx-btn.ctx-uncomplete { color: #a0620a; }
+  .ctx-btn.ctx-uncomplete:hover { background: #fff0d6; }
+  .ctx-btn.ctx-delete    { color: #c0392b; }
+  .ctx-btn.ctx-delete:hover    { background: #ffe8e8; }
+
+  /* ── EDIT MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(44,36,22,0.45);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: white;
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px 36px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: var(--shadow-lg);
+  }
+
+  .modal-handle {
+    width: 40px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 18px;
+  }
+
+  .modal h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    margin-bottom: 16px;
+  }
+
+  .modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+
+  .modal-save {
+    flex: 1; background: var(--gold); border: none; border-radius: 12px;
+    color: white; font-family: 'Nunito', sans-serif; font-weight: 700;
+    font-size: 0.88rem; padding: 11px; cursor: pointer;
+  }
+  .modal-cancel {
+    background: var(--warm); border: 1.5px solid var(--border); border-radius: 12px;
+    color: var(--muted); font-family: 'Nunito', sans-serif; font-size: 0.88rem;
+    padding: 11px 16px; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="page-title">My Agenda</div>
+    <div class="date-label" id="headerDate"></div>
+  </div>
+</div>
+
+<!-- TODAY -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-dot"></div>
+    <div class="section-title">Today</div>
+    <div class="event-count" id="todayCount">0 events</div>
+  </div>
+  <div class="events-list" id="todayList"></div>
+</div>
+
+<div class="divider"></div>
+
+<!-- TOMORROW -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-dot tomorrow"></div>
+    <div class="section-title">Tomorrow</div>
+    <div class="event-count" id="tomorrowCount">0 events</div>
+  </div>
+  <div class="events-list" id="tomorrowList"></div>
+</div>
+
+<div class="divider"></div>
+
+<!-- QUICK ADD -->
+<div class="add-section">
+  <div class="section-header">
+    <div class="section-dot" style="background:#a0620a"></div>
+    <div class="section-title">Add Event</div>
+  </div>
+  <div class="add-card">
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input class="form-input" id="eName" type="text" placeholder="Event name…" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" id="eDate" type="date" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Time</label>
+        <input class="form-input" id="eTime" type="time" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <select class="form-select" id="eCat">
+        <option value="work">Work</option>
+        <option value="personal">Personal</option>
+        <option value="health">Health</option>
+        <option value="social">Social</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <button class="add-btn" onclick="addEvent()">+ Add Event</button>
+  </div>
+</div>
+
+<!-- CONTEXT MENU -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-label" id="ctxLabel"></div>
+  <button class="ctx-btn" id="ctxEditBtn">✏️  Edit</button>
+  <button class="ctx-btn ctx-complete" id="ctxComplBtn">✓  Mark complete</button>
+  <button class="ctx-btn ctx-delete" id="ctxDelBtn">🗑  Delete</button>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3>Edit Event</h3>
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input class="form-input" id="mName" type="text" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" id="mDate" type="date" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Time</label>
+        <input class="form-input" id="mTime" type="time" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <select class="form-select" id="mCat">
+        <option value="work">Work</option>
+        <option value="personal">Personal</option>
+        <option value="health">Health</option>
+        <option value="social">Social</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-save" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Storage (shared with desktop agenda via same localStorage keys) ──
+  let events         = JSON.parse(localStorage.getItem('agendaEvents')    || '{}');
+  let recurringEvents = JSON.parse(localStorage.getItem('agendaRecurring') || '[]');
+  let completedEvents = JSON.parse(localStorage.getItem('agendaCompleted') || '{}');
+
+  function persist()          { localStorage.setItem('agendaEvents',    JSON.stringify(events)); }
+  function persistRecurring() { localStorage.setItem('agendaRecurring', JSON.stringify(recurringEvents)); }
+  function persistCompleted() { localStorage.setItem('agendaCompleted', JSON.stringify(completedEvents)); }
+
+  // ── Cloud sync ────────────────────────────────────────────
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYkPB2xIMu-hMD8dtNXHoJiIt6m4_E-7veq_I7_DyKRzyHrCZYV-AZpwgaR-k-MCE5/exec';
+
+  function apiCall(params) {
+    const url = SCRIPT_URL + '?' + new URLSearchParams(params).toString();
+    return fetch(url).then(r => r.json()).catch(() => null);
+  }
+
+  function sheetToLocal(sheetEvents) {
+    const evts = {}, rec = [], comp = {};
+    sheetEvents.forEach(e => {
+      if (!e.id || !e.name) return;
+      const completed = e.completed === 'true' || e.completed === true;
+      if (e.recurring === 'true' || e.recurring === true) {
+        const dow = e.date ? new Date(e.date + 'T00:00:00').getDay() : 0;
+        rec.push({ id: e.id, name: e.name, time: e.time, cat: e.cat, dayOfWeek: dow });
+        if (completed) comp['recurring_' + e.id] = true;
+      } else {
+        if (!evts[e.date]) evts[e.date] = [];
+        evts[e.date].push({ id: e.id, name: e.name, time: e.time, cat: e.cat });
+        if (completed) comp[e.date + '_' + (evts[e.date].length - 1)] = true;
+      }
+    });
+    return { evts, rec, comp };
+  }
+
+  function showSyncStatus(msg, color) {
+    let badge = document.getElementById('syncBadge');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.id = 'syncBadge';
+      badge.style.cssText = 'position:fixed;bottom:20px;right:16px;padding:7px 16px;border-radius:20px;font-family:Nunito,sans-serif;font-size:0.75rem;font-weight:700;z-index:999;transition:opacity 0.4s;box-shadow:0 2px 12px rgba(0,0,0,0.1);';
+      document.body.appendChild(badge);
+    }
+    badge.textContent = msg;
+    badge.style.background = color === 'green' ? '#dcf5e4' : color === 'red' ? '#ffe8e8' : '#fff0d6';
+    badge.style.color      = color === 'green' ? '#1e7a3d' : color === 'red' ? '#c0392b' : '#a0620a';
+    badge.style.opacity    = '1';
+    clearTimeout(badge._t);
+    badge._t = setTimeout(() => badge.style.opacity = '0', 2500);
+  }
+
+  async function syncFromCloud() {
+    showSyncStatus('Syncing…', 'yellow');
+    const result = await apiCall({ action: 'getAll' });
+    if (!result || result.error) { showSyncStatus('Sync failed', 'red'); return; }
+    const { evts, rec, comp } = sheetToLocal(result.events);
+    events = evts; recurringEvents = rec; completedEvents = comp;
+    persist(); persistRecurring(); persistCompleted();
+    showSyncStatus('Synced ✓', 'green');
+    render();
+  }
+
+  function pushEvent(eventObj)          { return apiCall({ action: 'save', event: JSON.stringify(eventObj) }); }
+  function pushDelete(id)               { return apiCall({ action: 'delete', id }); }
+  function pushCompleted(id, completed) { return apiCall({ action: 'setCompleted', id, completed: String(completed) }); }
+  // ─────────────────────────────────────────────────────────
+
+  // ── Helpers ──
+  function toDateStr(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function fmtTime(t) {
+    if (!t) return '';
+    const [h, m] = t.split(':');
+    const hr = parseInt(h);
+    return `${hr % 12 || 12}:${m} ${hr < 12 ? 'AM' : 'PM'}`;
+  }
+
+  function fmtDate(d) {
+    const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}`;
+  }
+
+  function getEventsForDay(ds) {
+    const d   = new Date(ds + 'T00:00:00');
+    const dow = d.getDay();
+    const oneOffs   = (events[ds] || []).map((e, i) => ({ ...e, _type: 'one-off', _idx: i, _ds: ds }));
+    const recurring = recurringEvents
+      .filter(r => r.dayOfWeek === dow)
+      .map(r => ({ ...r, _type: 'recurring' }));
+    return [...oneOffs, ...recurring].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  }
+
+  function getKey(e) {
+    return e._type === 'recurring' ? `recurring_${e.id}` : `${e._ds}_${e._idx}`;
+  }
+
+  // ── Render ──
+  const today    = new Date(); today.setHours(0,0,0,0);
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+  const todayStr    = toDateStr(today);
+  const tomorrowStr = toDateStr(tomorrow);
+
+  document.getElementById('headerDate').textContent = fmtDate(today);
+  document.getElementById('eDate').value = todayStr;
+
+  function renderList(listId, countId, ds) {
+    const list    = document.getElementById(listId);
+    const countEl = document.getElementById(countId);
+    const evts    = getEventsForDay(ds);
+    countEl.textContent = evts.length + (evts.length === 1 ? ' event' : ' events');
+    list.innerHTML = '';
+
+    if (evts.length === 0) {
+      list.innerHTML = `<div class="empty-state"><span class="emoji">🌿</span>Nothing scheduled</div>`;
+      return;
+    }
+
+    evts.forEach(e => {
+      const key       = getKey(e);
+      const isDone    = !!completedEvents[key];
+      const card      = document.createElement('div');
+      card.className  = 'event-card' + (isDone ? ' completed' : '');
+
+      card.innerHTML = `
+        <div class="cat-dot ${e.cat}"></div>
+        <div class="event-info">
+          <div class="event-name">${e.name}</div>
+          ${e.time ? `<div class="event-time">${fmtTime(e.time)}${e._type==='recurring'?' · weekly':''}</div>` : (e._type==='recurring'?'<div class="event-time">Weekly</div>':'')}
+        </div>
+        ${isDone ? '<div class="check-icon">✓</div>' : ''}
+      `;
+
+      card.onclick = (ev) => {
+        ev.stopPropagation();
+        openCtx(ev, e, key, isDone);
+      };
+
+      list.appendChild(card);
+    });
+  }
+
+  function render() {
+    renderList('todayList',    'todayCount',    todayStr);
+    renderList('tomorrowList', 'tomorrowCount', tomorrowStr);
+  }
+
+  // ── Add event ──
+  function addEvent() {
+    const name = document.getElementById('eName').value.trim();
+    if (!name) { document.getElementById('eName').focus(); return; }
+    const date = document.getElementById('eDate').value;
+    const time = document.getElementById('eCat').value;  // fix below
+    const cat  = document.getElementById('eCat').value;
+    const timeVal = document.getElementById('eTime').value;
+    if (!date) { document.getElementById('eDate').focus(); return; }
+
+    if (!events[date]) events[date] = [];
+    const id = 'evt_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+    events[date].push({ id, name, time: timeVal, cat });
+    persist();
+    pushEvent({ id, name, time: timeVal, cat, date, recurring: false, completed: false });
+
+    document.getElementById('eName').value = '';
+    document.getElementById('eTime').value = '';
+    render();
+
+    // Scroll to today or tomorrow if that's the date added
+    if (date === todayStr || date === tomorrowStr) {
+      document.getElementById(date === todayStr ? 'todayList' : 'tomorrowList')
+        .scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  // ── Context menu ──
+  const ctxMenu    = document.getElementById('ctxMenu');
+  const ctxLabel   = document.getElementById('ctxLabel');
+  const ctxEditBtn = document.getElementById('ctxEditBtn');
+  const ctxComplBtn = document.getElementById('ctxComplBtn');
+  const ctxDelBtn  = document.getElementById('ctxDelBtn');
+  let ctxState     = null;
+
+  function openCtx(ev, e, key, isDone) {
+    ctxState = { e, key };
+    ctxLabel.textContent = e.name;
+
+    if (isDone) {
+      ctxComplBtn.textContent = '↩  Undo complete';
+      ctxComplBtn.className   = 'ctx-btn ctx-uncomplete';
+    } else {
+      ctxComplBtn.textContent = '✓  Mark complete';
+      ctxComplBtn.className   = 'ctx-btn ctx-complete';
+    }
+
+    ctxMenu.style.left = '0px';
+    ctxMenu.style.top  = '0px';
+    ctxMenu.classList.add('open');
+
+    const mw = ctxMenu.offsetWidth, mh = ctxMenu.offsetHeight;
+    let x = ev.clientX + 8, y = ev.clientY + 8;
+    if (x + mw > window.innerWidth  - 8) x = window.innerWidth  - mw - 8;
+    if (y + mh > window.innerHeight - 8) y = window.innerHeight - mh - 8;
+    ctxMenu.style.left = x + 'px';
+    ctxMenu.style.top  = y + 'px';
+  }
+
+  function closeCtx() { ctxMenu.classList.remove('open'); ctxState = null; }
+
+  ctxEditBtn.onclick = () => {
+    if (!ctxState) return;
+    const { e } = ctxState;
+    closeCtx();
+    openEdit(e);
+  };
+
+  ctxComplBtn.onclick = () => {
+    if (!ctxState) return;
+    const { key, e } = ctxState;
+    const nowDone = !completedEvents[key];
+    if (nowDone) { completedEvents[key] = true; } else { delete completedEvents[key]; }
+    persistCompleted();
+    if (e.id) pushCompleted(e.id, nowDone);
+    closeCtx(); render();
+  };
+
+  ctxDelBtn.onclick = () => {
+    if (!ctxState) return;
+    const { e } = ctxState;
+    closeCtx();
+    if (e._type === 'recurring') {
+      if (e.id) pushDelete(e.id);
+      recurringEvents = recurringEvents.filter(x => x.id !== e.id);
+      persistRecurring();
+    } else {
+      if (e.id) pushDelete(e.id);
+      if (events[e._ds]) { events[e._ds].splice(e._idx, 1); persist(); }
+    }
+    render();
+  };
+
+  document.addEventListener('click', (ev) => {
+    if (!ctxMenu.contains(ev.target)) closeCtx();
+  });
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key === 'Escape') { closeCtx(); closeModal(); }
+  });
+
+  // ── Edit modal ──
+  let editState = null;
+
+  function openEdit(e) {
+    editState = e;
+    document.getElementById('mName').value = e.name;
+    document.getElementById('mDate').value = e._ds || '';
+    document.getElementById('mTime').value = e.time || '';
+    document.getElementById('mCat').value  = e.cat  || 'other';
+    document.getElementById('editModal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('editModal').classList.remove('open');
+    editState = null;
+  }
+
+  function saveEdit() {
+    if (!editState) return;
+    const name = document.getElementById('mName').value.trim();
+    const date = document.getElementById('mDate').value;
+    const time = document.getElementById('mTime').value;
+    const cat  = document.getElementById('mCat').value;
+    if (!name) return;
+
+    if (editState._type === 'recurring') {
+      const r = recurringEvents.find(x => x.id === editState.id);
+      if (r) { r.name = name; r.time = time; r.cat = cat; }
+      persistRecurring();
+    } else {
+      if (events[editState._ds]) {
+        events[editState._ds][editState._idx] = { name, time, cat };
+        persist();
+      }
+    }
+    closeModal();
+    render();
+  }
+
+  document.getElementById('editModal').addEventListener('click', function(ev) {
+    if (ev.target === this) closeModal();
+  });
+
+  syncFromCloud();
+</script>
+</body>
+</html>
