@@ -503,17 +503,40 @@
 
   function sheetToLocal(sheetEvents) {
     const evts = {}, rec = [], comp = {};
+
+    function cleanDate(raw) {
+      if (!raw) return '';
+      // Google Sheets returns full ISO strings like "2026-03-25T04:00:00.000Z"
+      // We just want "2026-03-25"
+      if (typeof raw === 'string' && raw.length > 10) return raw.substring(0, 10);
+      return raw;
+    }
+
+    function cleanTime(raw) {
+      if (!raw) return '';
+      // Google Sheets stores times as Date objects serialized like "1899-12-30T17:33:00.000Z"
+      // Extract just HH:MM
+      if (typeof raw === 'string' && raw.includes('T')) {
+        const t = raw.split('T')[1];
+        return t ? t.substring(0, 5) : '';
+      }
+      return raw;
+    }
+
     sheetEvents.forEach(e => {
       if (!e.id || !e.name) return;
       const completed = e.completed === 'true' || e.completed === true;
+      const date = cleanDate(e.date);
+      const time = cleanTime(e.time);
+
       if (e.recurring === 'true' || e.recurring === true) {
-        const dow = e.date ? new Date(e.date + 'T00:00:00').getDay() : 0;
-        rec.push({ id: e.id, name: e.name, time: e.time, cat: e.cat, dayOfWeek: dow });
+        const dow = date ? new Date(date + 'T12:00:00').getDay() : 0;
+        rec.push({ id: e.id, name: e.name, time, cat: e.cat, dayOfWeek: dow });
         if (completed) comp['recurring_' + e.id] = true;
       } else {
-        if (!evts[e.date]) evts[e.date] = [];
-        evts[e.date].push({ id: e.id, name: e.name, time: e.time, cat: e.cat });
-        if (completed) comp[e.date + '_' + (evts[e.date].length - 1)] = true;
+        if (!evts[date]) evts[date] = [];
+        evts[date].push({ id: e.id, name: e.name, time, cat: e.cat });
+        if (completed) comp[date + '_' + (evts[date].length - 1)] = true;
       }
     });
     return { evts, rec, comp };
@@ -775,6 +798,9 @@
   document.getElementById('editModal').addEventListener('click', function(ev) {
     if (ev.target === this) closeModal();
   });
+
+  // Auto-sync every 30 seconds
+  setInterval(syncFromCloud, 30000);
 
   syncFromCloud();
 </script>
